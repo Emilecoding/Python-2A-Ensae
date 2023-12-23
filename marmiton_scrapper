@@ -1,0 +1,43 @@
+# Pour scrapper le site de marmiton, on utilise Selenium car le site est dynamique 
+
+import selenium
+from webdriver_manager.chrome import ChromeDriverManager
+
+path_to_web_driver = ChromeDriverManager().install()
+
+import time
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By 
+from selenium.common.exceptions import NoSuchElementException, WebDriverException
+from src.conversions import CONVERSIONS_TO_GRAMS, CONVERSIONS_TO_ML
+from typing import Callable, Dict
+from selenium.webdriver.chrome.service import Service
+
+#### Scrapper 
+
+
+def marmiton_scrapper(ingredient : str, n : int) -> Dict : 
+    """ returns the data for n recipes according to a given ingredient
+    
+    Args : 
+        ingredient (str) : the ingredient that we have to match to a recipe
+        n (int) : number of results to return. We return several results so that, according to what is left in the fridge, the correspondance is optimal 
+
+    Returns : 
+        Dict : the key is the ingredient, the value is relevant data according to the recipe
+
+    """
+
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+    #chrome_options.add_argument('--verbose') 
+
+    # Lancement du navigateur
+    service = Service(executable_path=path_to_web_driver)
+
+    browser = webdriver.Chrome(service=service,
+                               options=chrome_options)
+

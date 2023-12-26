@@ -1,6 +1,11 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+import re # for regular expressions 
+from re import sub
 
 ## Fonctions d'affichage 
 
@@ -41,58 +46,40 @@ def pie_oui_non(dataframe, column, titre):
     plt.show()
     return None
 
-# Fonctions de distance et de matching 
 
-def 
+## Fonctions de nettoyage des données 
 
+nltk.download('stopwords')
+nltk.download('punkt')
 
-rapidfuzz.distance.Levenshtein.distance('sucre blanc','sucre roux', weights =(1,1,1))
+def cleaning(s):
+    stop_words_spe = ['CRU','CRUE','ALIMENT','TOUT','TYPE','PREEMBALLE','PREEMBALLEE','PREEMBALLEES','MOYEN','CUIT',
+                      'CUITE','PETIT DEJEUNER','ROTI','ROTIE','FOUR','AU FOUR','KG','CL','G','L','MG','MARTINIQUE',
+                      'VITAMINES','MINERAUX'
+                     ]
+    stop_words_default = [s.upper() for s in stopwords.words('french')]
+    stop_words = set(stop_words_default + stop_words_spe)
+    s = unidecode(s)
+    s = s.upper()
+    s = sub("[^A-Z ]", " ", s)
+    mots = word_tokenize(s)
+    mots_filtres = [mot for mot in mots if mot not in stop_words]
+    #from nltk.stem.snowball import FrenchStemmer
+    #s = " ".join(FrenchStemmer().stem(s) for s in s.split())
+    return ' '.join(mots_filtres)
 
-generalisation of Levenshtein distance : string distance 
-
-products_data["distance"] = products_data.apply(
-        lambda x: distance(x.clean_name_prod, clean_product_name), axis=1
-    )
-
-produit cartésien codé en python ? 
-
-
-
-
-
-
-
-
+## Fonctions de distance et de matching 
 
 
 from itertools import product
 
-def calculer_meilleur_match(recette, produits_ciqual):
+def calcul_match(ingr_recette, ingr_ciqual):
+
+    """ 
+    returns the ingrédients in the Ciqual database that best match the ingredients 
+    of the recipe we try to reproduce 
+    
+    """
     # Produit cartésien entre la recette et les produits Ciqual
-    produits_combines = list(product(recette, produits_ciqual))
+    #produits_combines = list(product(ingr_recette, produits_ciqual))
 
-    # Fonction de comparaison pour trouver le meilleur match
-    def comparer_produits(produit):
-        recette, produit_ciqual = produit
-        # Ajoutez ici votre logique de comparaison entre la recette et le produit Ciqual
-        # Par exemple, vous pourriez utiliser une mesure de similarité ou une autre métrique
-        # Retournez la valeur de la métrique de similarité ou autre
-        return len(set(recette) & set(produit_ciqual))
-
-    # Trouver le meilleur match pour chaque produit de la recette
-    meilleurs_matches = []
-    for produit_recette in recette:
-        # Triez les produits combinés en fonction de la comparaison
-        produits_combines.sort(key=comparer_produits, reverse=True)
-        # Le meilleur match est le premier élément trié
-        meilleur_match = produits_combines[0][1]
-        meilleurs_matches.append(meilleur_match)
-
-    return meilleurs_matches
-
-# Exemple d'utilisation
-recette_exemple = ['tomate', 'poivre', 'oignon']
-produits_ciqual_exemple = ['tomate', 'poivre', 'oignon', 'carotte', 'pomme']
-
-meilleurs_matches = calculer_meilleur_match(recette_exemple, produits_ciqual_exemple)
-print(meilleurs_matches)

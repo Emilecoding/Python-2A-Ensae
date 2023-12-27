@@ -83,3 +83,39 @@ def calcul_match(ingr_recette, ingr_ciqual):
     # Produit cartésien entre la recette et les produits Ciqual
     #produits_combines = list(product(ingr_recette, produits_ciqual))
 
+
+
+import spacy
+
+!python -m spacy download fr_core_news_sm     # Téléchargement du modèle de traitement du français
+
+from scipy.spatial.distance import cosine
+
+nlp2 = spacy.load('fr_core_news_sm')
+vectors2 = np.array([nlp2(aliment).vector for aliment in data_ciqual['Nom clean'] if nlp2(aliment).vector.any()])     #Vectorisation des aliments de la base Ciqual par le modèle fr_core_news_sm#
+
+def trouver_correspondance_spacy2(aliment_entre, dataframe, seuil=0.8):
+    # Vectoriser le nouvel aliment
+    vecteur_aliment_entre = nlp2(aliment_entre).vector
+    
+    # Vérifier si vectors2 est vide
+    if len(vectors2) == 0:
+        return "Aucun vecteur n'est disponible dans vectors2"
+    
+    # Calculer la similarité cosinus avec tous les vecteurs d'aliments existants
+    similarites = np.array([1 - cosine(vecteur_aliment_entre, vecteur) for vecteur in vectors2])
+    
+    # Trouver la correspondance la plus proche
+    index_correspondance = similarites.argmax()
+    score_correspondance = similarites[index_correspondance]
+    
+    # Si le score est supérieur au seuil, retourner la correspondance
+    if score_correspondance >= seuil:
+        return dataframe['Nom clean'].iloc[index_correspondance]
+    else:
+        return "Aucune correspondance trouvée"
+
+
+
+
+

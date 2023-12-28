@@ -117,5 +117,25 @@ def trouver_correspondance_spacy2(aliment_entre, dataframe, seuil=0.8):
 
 
 
+import re
+
+def conversion_recette(chaine):
+    # Utilise une expression régulière pour trouver les correspondances de quantité et d'ingrédient
+    regex = re.compile(r'(\d+)\s*(cl|cuillère|pincée)\s*de\s*([\w\s]+)')
+    correspondances = regex.findall(chaine)
+
+    # Crée la liste de couples (ingrédient, quantité)
+    liste_ingredients_quantites = [(ingredient.strip(), f"{quantite} {unite}") for quantite, unite, ingredient in correspondances]
+
+
+    return liste_ingredients_quantites
+
+# Exemple d'utilisation
+chaine_recette = '15 cl de café, une cuillère de sucre, une pincée de sel'
+resultat = conversion_recette(chaine_recette)
+print(resultat)
+
+
+
 
 

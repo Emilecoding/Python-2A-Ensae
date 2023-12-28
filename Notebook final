@@ -1653,3 +1653,623 @@
  "nbformat": 4,
  "nbformat_minor": 5
 }
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "2179b082-f106-45d1-a881-34af2853ac97",
+   "metadata": {},
+   "source": [
+    "# **Webscrapping de Marmiton**"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "c7d0323d-23e6-4866-937a-337934667f3b",
+   "metadata": {},
+   "source": [
+    "# **1. Installation de Selenium**\n",
+    "Pour mimer le comportement d'un utilisateur qui navigue sur une page web (et pas sur une page statique), on utilise Selenium.\n",
+    "Cela nécessite l'installation de quelques dépendances avant l'installation de Selenium lui-même."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "7149fbfb-b736-453d-a8d3-8e1b306e6d1f",
+   "metadata": {},
+   "source": [
+    "## 1.1. On installe les dépendances"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 79,
+   "id": "3dd5d8b6-3a16-4896-841b-545a0de2b4f3",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "--2023-12-27 18:12:45--  https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb\n",
+      "Resolving dl.google.com (dl.google.com)... 64.233.167.93, 64.233.167.190, 64.233.167.91, ...\n",
+      "Connecting to dl.google.com (dl.google.com)|64.233.167.93|:443... connected.\n",
+      "HTTP request sent, awaiting response... 200 OK\n",
+      "Length: 104953176 (100M) [application/x-debian-package]\n",
+      "Saving to: ‘/tmp/chrome.deb’\n",
+      "\n",
+      "/tmp/chrome.deb     100%[===================>] 100.09M  68.9MB/s    in 1.5s    \n",
+      "\n",
+      "2023-12-27 18:12:47 (68.9 MB/s) - ‘/tmp/chrome.deb’ saved [104953176/104953176]\n",
+      "\n",
+      "Hit:1 https://dl.google.com/linux/chrome/deb stable InRelease\n",
+      "Get:2 http://security.ubuntu.com/ubuntu jammy-security InRelease [110 kB]\n",
+      "Hit:3 http://archive.ubuntu.com/ubuntu jammy InRelease  \n",
+      "Get:4 http://archive.ubuntu.com/ubuntu jammy-updates InRelease [119 kB]\n",
+      "Hit:5 http://archive.ubuntu.com/ubuntu jammy-backports InRelease    \n",
+      "Hit:6 https://apt.postgresql.org/pub/repos/apt jammy-pgdg InRelease\n",
+      "Fetched 229 kB in 2s (125 kB/s)                      \n",
+      "Reading package lists... Done\n",
+      "W: https://apt.postgresql.org/pub/repos/apt/dists/jammy-pgdg/InRelease: Key is stored in legacy trusted.gpg keyring (/etc/apt/trusted.gpg), see the DEPRECATION section in apt-key(8) for details.\n",
+      "Reading package lists... Done\n",
+      "Building dependency tree... Done\n",
+      "Reading state information... Done\n",
+      "Note, selecting 'google-chrome-stable' instead of '/tmp/chrome.deb'\n",
+      "google-chrome-stable is already the newest version (120.0.6099.129-1).\n",
+      "0 upgraded, 0 newly installed, 0 to remove and 2 not upgraded.\n",
+      "Requirement already satisfied: chromedriver-autoinstaller in /opt/mamba/lib/python3.10/site-packages (0.6.3)\n",
+      "Requirement already satisfied: selenium in /opt/mamba/lib/python3.10/site-packages (4.16.0)\n",
+      "Requirement already satisfied: packaging>=23.1 in /opt/mamba/lib/python3.10/site-packages (from chromedriver-autoinstaller) (23.1)\n",
+      "Requirement already satisfied: urllib3<3,>=1.26 in /opt/mamba/lib/python3.10/site-packages (from urllib3[socks]<3,>=1.26->selenium) (1.26.18)\n",
+      "Requirement already satisfied: trio~=0.17 in /opt/mamba/lib/python3.10/site-packages (from selenium) (0.23.2)\n",
+      "Requirement already satisfied: trio-websocket~=0.9 in /opt/mamba/lib/python3.10/site-packages (from selenium) (0.11.1)\n",
+      "Requirement already satisfied: certifi>=2021.10.8 in /opt/mamba/lib/python3.10/site-packages (from selenium) (2023.11.17)\n",
+      "Requirement already satisfied: attrs>=20.1.0 in /opt/mamba/lib/python3.10/site-packages (from trio~=0.17->selenium) (23.1.0)\n",
+      "Requirement already satisfied: sortedcontainers in /opt/mamba/lib/python3.10/site-packages (from trio~=0.17->selenium) (2.4.0)\n",
+      "Requirement already satisfied: idna in /opt/mamba/lib/python3.10/site-packages (from trio~=0.17->selenium) (3.4)\n",
+      "Requirement already satisfied: outcome in /opt/mamba/lib/python3.10/site-packages (from trio~=0.17->selenium) (1.3.0.post0)\n",
+      "Requirement already satisfied: sniffio>=1.3.0 in /opt/mamba/lib/python3.10/site-packages (from trio~=0.17->selenium) (1.3.0)\n",
+      "Requirement already satisfied: exceptiongroup in /opt/mamba/lib/python3.10/site-packages (from trio~=0.17->selenium) (1.2.0)\n",
+      "Requirement already satisfied: wsproto>=0.14 in /opt/mamba/lib/python3.10/site-packages (from trio-websocket~=0.9->selenium) (1.2.0)\n",
+      "Requirement already satisfied: PySocks!=1.5.7,<2.0,>=1.5.6 in /opt/mamba/lib/python3.10/site-packages (from urllib3[socks]<3,>=1.26->selenium) (1.7.1)\n",
+      "Requirement already satisfied: h11<1,>=0.9.0 in /opt/mamba/lib/python3.10/site-packages (from wsproto>=0.14->trio-websocket~=0.9->selenium) (0.14.0)\n"
+     ]
+    },
+    {
+     "data": {
+      "text/plain": [
+       "'/opt/mamba/lib/python3.10/site-packages/chromedriver_autoinstaller/120/chromedriver'"
+      ]
+     },
+     "execution_count": 79,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "!wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -O /tmp/chrome.deb\n",
+    "!sudo apt-get update\n",
+    "!sudo -E apt-get install -y /tmp/chrome.deb\n",
+    "!pip install chromedriver-autoinstaller selenium\n",
+    "\n",
+    "import chromedriver_autoinstaller\n",
+    "chromedriver_autoinstaller.install()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "04f567b5-4ecb-40b5-a863-bc89ccb07973",
+   "metadata": {},
+   "source": [
+    "## 1.2. On installe Selenium"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "b4835a16-9cb8-4046-a51e-287618d5920e",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Requirement already satisfied: webdriver-manager in /opt/mamba/lib/python3.10/site-packages (4.0.1)\n",
+      "Requirement already satisfied: requests in /opt/mamba/lib/python3.10/site-packages (from webdriver-manager) (2.31.0)\n",
+      "Requirement already satisfied: python-dotenv in /opt/mamba/lib/python3.10/site-packages (from webdriver-manager) (1.0.0)\n",
+      "Requirement already satisfied: packaging in /opt/mamba/lib/python3.10/site-packages (from webdriver-manager) (23.1)\n",
+      "Requirement already satisfied: charset-normalizer<4,>=2 in /opt/mamba/lib/python3.10/site-packages (from requests->webdriver-manager) (3.2.0)\n",
+      "Requirement already satisfied: idna<4,>=2.5 in /opt/mamba/lib/python3.10/site-packages (from requests->webdriver-manager) (3.4)\n",
+      "Requirement already satisfied: urllib3<3,>=1.21.1 in /opt/mamba/lib/python3.10/site-packages (from requests->webdriver-manager) (1.26.18)\n",
+      "Requirement already satisfied: certifi>=2017.4.17 in /opt/mamba/lib/python3.10/site-packages (from requests->webdriver-manager) (2023.11.17)\n"
+     ]
+    }
+   ],
+   "source": [
+    "!pip install webdriver-manager\n",
+    "\n",
+    "import selenium\n",
+    "from webdriver_manager.chrome import ChromeDriverManager\n",
+    "\n",
+    "path_to_web_driver = ChromeDriverManager().install()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "e217ce0e-5caa-45c7-88ea-57469ca27da6",
+   "metadata": {},
+   "source": [
+    "# **2. Lancement de marmiton**"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "fc8742ad-6916-4f47-a650-635044bab085",
+   "metadata": {},
+   "source": [
+    "## 2.1. On initialise le navigateur\n",
+    "Pour mimer le comportement d'un utilisateur, on doit initialiser le navigateur, notammment pour pouvoir mimer un temps de latence (un utilisateur n'agit pas de manière absolument instantanée) et le fait d'actionner les touches du clavier."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 70,
+   "id": "108f8543-4735-433c-821b-09950d7f081e",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import time\n",
+    "\n",
+    "from selenium import webdriver\n",
+    "from selenium.webdriver.common.keys import Keys\n",
+    "\n",
+    "chrome_options = webdriver.ChromeOptions()\n",
+    "chrome_options.add_argument('--headless')\n",
+    "chrome_options.add_argument('--no-sandbox')\n",
+    "chrome_options.add_argument('--disable-dev-shm-usage')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "4674f3c8-3d56-4792-8d3f-2614228af655",
+   "metadata": {},
+   "source": [
+    "## 2.2. On lance le navigateur\n",
+    "On exécute le navigateur comme le ferait un utilisateur."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "id": "01ac0df3-6d40-4583-ab3a-92f0c28ab8eb",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from selenium.webdriver.chrome.service import Service\n",
+    "service = Service(executable_path=path_to_web_driver)\n",
+    "\n",
+    "browser = webdriver.Chrome(service=service,\n",
+    "                           options=chrome_options)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "2b0829e8-e584-4a6b-83d9-9c7ac0347bc9",
+   "metadata": {},
+   "source": [
+    "## 2.3. On se rend sur marmiton\n",
+    "La commande \"get\" nous permet de réaliser cette action très facilement. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 31,
+   "id": "3473fa98-4d6a-403c-90cc-c8cacc2f827c",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Arrivée sur marmiton\n"
+     ]
+    }
+   ],
+   "source": [
+    "browser.get('https://www.marmiton.org')\n",
+    "print('Arrivée sur marmiton')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "6cc3f161-8e14-4438-8aeb-8681b75f3065",
+   "metadata": {},
+   "source": [
+    "# **3. Gestion des cookies**\n",
+    "Lorsqu'on arrive sur le site de Marmiton, un popup s'ouvre qui demande à ce que l'on accepte les cookies.\\\n",
+    "Pour que cette acceptation se fasse automatiquement, on recherche dans le code source le bouton \"accepter les cookies\" et on mime le comportement d'un utilisateur qui actionnerait cette commande."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 71,
+   "id": "de38d2d4-6c13-4357-8294-bd3890107554",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Entrée sur marmiton réussie \n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "from selenium.webdriver.common.by import By\n",
+    "from selenium.common.exceptions import NoSuchElementException, WebDriverException\n",
+    "\n",
+    "try : \n",
+    "    popup = browser.find_element(By.ID, \"didomi-notice-agree-button\")\n",
+    "    popup.click()\n",
+    "    time.sleep(2)\n",
+    "except NoSuchElementException:\n",
+    "    pass\n",
+    "\n",
+    "print(\"Entrée sur marmiton réussie \\n\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "bb19b874-f4cc-450d-beef-837ca2d70001",
+   "metadata": {},
+   "source": [
+    "# **4. Recherche de recettes pour un ingrédient donné**"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "a9bf9188-c345-4c82-acb4-269546d7c0e3",
+   "metadata": {},
+   "source": [
+    "## 4.1. On recherche l'ingrédient choisi dans la barre de recherche du site\n",
+    "a) On se place dans la barre de recherche\\\n",
+    "b) On mime le comportement d'un utilisateur qui utiliserait le clavier pour formuler sa requête (en terminant par actionner la touche \"ENTREE\"/\"RETURN\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 78,
+   "id": "0ae784ad-fe18-495e-9eeb-22cb179eb6ce",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "<selenium.webdriver.remote.webelement.WebElement (session=\"09aa4b2080f78835e845fa81d45590b4\", element=\"34FF6F60376438B5D5410BD25D8301C1_element_4452\")>\n",
+      "recettes trouvées\n"
+     ]
+    }
+   ],
+   "source": [
+    "search = browser.find_element(\"name\", \"aqt\")\n",
+    "print(search)\n",
+    "\n",
+    "search.send_keys(\"farine\")\n",
+    "search.send_keys(Keys.RETURN)\n",
+    "\n",
+    "time.sleep(1)\n",
+    "\n",
+    "print(\"recettes trouvées\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "b08071a5-1ea6-461e-a7b7-870bb56a87c7",
+   "metadata": {},
+   "source": [
+    "## 4.2. On résupère l'URL de la page présentant les résultats de la recherche\n",
+    "Cela se fait très facilement à partir du code suivant."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "id": "61a3e6eb-c465-47b1-8e6a-28a86179d795",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "https://www.marmiton.org/recettes/recherche.aspx?aqt=farine\n"
+     ]
+    }
+   ],
+   "source": [
+    "url = browser.current_url\n",
+    "print(url)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "335f1e95-1725-475a-a9fd-cfc75d476093",
+   "metadata": {},
+   "source": [
+    "## 4.3. On récupère les url des pages correspondant aux différentes recettes trouvées"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "6ba22fdb-545e-4e09-af22-8a8aff1a6b4f",
+   "metadata": {},
+   "source": [
+    "### 4.3.1 Grâce au xpahth, on récupère les url des recettes trouvées\n",
+    "a) On importe le package urllib3\\\n",
+    "b) On installe la bibliothèque lxml qui est une bibliothèque de traitement prenant notamment en charge xpath\\\n",
+    "c) On récupère le xpath de la page de résultats obtenue après la recherche précédente\\\n",
+    "d) Cela nous permet, pour chacun des noeuds dépendant de ce xpath, de récupérer l'url correspondante\\\n",
+    "e) On affiche les url des noeuds qui nous intéressent, c'est-à-dire de ceux menant à des recettes (et dont l'url commence donc par \"/recettes/recette\")."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "id": "1635c7b1-4f55-429b-937d-d2d535ff735d",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Requirement already satisfied: lxml in /opt/mamba/lib/python3.10/site-packages (4.9.4)\n",
+      "/recettes/recettes-incontournables.aspx\n",
+      "/recettes/recette_gateau-moelleux-a-la-farine-de-chataigne_85864.aspx\n",
+      "/recettes/recette_tortillas-recette-sans-farine-de-mais_40389.aspx\n",
+      "/recettes/recette_gateau-au-chocolat-sans-farine-et-sans-beurre_17669.aspx\n",
+      "/recettes/recette_cake-a-la-farine-de-chataigne_13766.aspx\n",
+      "/recettes/recette_moelleux-au-chocolat-sans-gluten-farine-de-riz_42417.aspx\n",
+      "/recettes/recette_besan-paratha-beignets-a-la-farine-de-pois-chiches-inde_15796.aspx\n",
+      "/recettes/recette_gateau-de-farine-de-chataigne-noisettes-et-chocolat_17184.aspx\n",
+      "/recettes/recette_cake-farine-complete-jambon-gruyere_37981.aspx\n",
+      "/recettes/recette_gateau-aux-pommes-a-la-farine-de-chataigne_54688.aspx\n",
+      "/recettes/recette_gateau-au-chocolat-fondant-sans-farine_30347.aspx\n",
+      "/recettes/recette_gateau-au-yaourt-aux-3-farines_42407.aspx\n",
+      "/recettes/recette_gateau-a-l-orange-et-poudre-d-amande-sans-farine_371165.aspx\n"
+     ]
+    }
+   ],
+   "source": [
+    "import urllib3\n",
+    "http = urllib3.PoolManager()\n",
+    "r= http.request('GET', url)\n",
+    "# si on veut : print(r.data)\n",
+    "\n",
+    "!pip install lxml \n",
+    "from lxml import html\n",
+    "\n",
+    "data_string = r.data.decode('utf-8', errors = 'ignore')\n",
+    "tree = html.fromstring(data_string)\n",
+    "\n",
+    "links = tree.xpath('//a')\n",
+    "for link in links:\n",
+    "    l = link.get('href')\n",
+    "    if l.startswith('/recettes/recette'):\n",
+    "        print(l)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "38b88000-00c3-4041-9046-0349b0890f8d",
+   "metadata": {},
+   "source": [
+    "### 4.3.2. On crée une liste avec les url correspondant aux recettes trouvées\n",
+    "Pour cela, on commence par créer une liste vide. Pour chaque noeud du xpath trouvé précédemment, on obtient l'url grâce à la méthode \"get('href')\". On ne conserve que les noeuds menant à des recettes, c'est-à-dire ceux dont l'url commence par \"/recettes/recette\". Enfin, pour que le navigateur puisse suivre ces url par la suite, il faut ajouter \"https://www.marmiton.org\".\\\n",
+    "On obtient alors une liste d'url pertinentes et fonctionnelles. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 67,
+   "id": "fc8385a6-a370-48c1-981d-3f9ea424c160",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "['https://www.marmiton.org/recettes/recettes-incontournables.aspx', 'https://www.marmiton.org/recettes/recette_gateau-moelleux-a-la-farine-de-chataigne_85864.aspx', 'https://www.marmiton.org/recettes/recette_tortillas-recette-sans-farine-de-mais_40389.aspx', 'https://www.marmiton.org/recettes/recette_gateau-au-chocolat-sans-farine-et-sans-beurre_17669.aspx', 'https://www.marmiton.org/recettes/recette_cake-a-la-farine-de-chataigne_13766.aspx', 'https://www.marmiton.org/recettes/recette_moelleux-au-chocolat-sans-gluten-farine-de-riz_42417.aspx', 'https://www.marmiton.org/recettes/recette_besan-paratha-beignets-a-la-farine-de-pois-chiches-inde_15796.aspx', 'https://www.marmiton.org/recettes/recette_gateau-de-farine-de-chataigne-noisettes-et-chocolat_17184.aspx', 'https://www.marmiton.org/recettes/recette_cake-farine-complete-jambon-gruyere_37981.aspx', 'https://www.marmiton.org/recettes/recette_gateau-aux-pommes-a-la-farine-de-chataigne_54688.aspx', 'https://www.marmiton.org/recettes/recette_gateau-au-chocolat-fondant-sans-farine_30347.aspx', 'https://www.marmiton.org/recettes/recette_gateau-au-yaourt-aux-3-farines_42407.aspx', 'https://www.marmiton.org/recettes/recette_gateau-a-l-orange-et-poudre-d-amande-sans-farine_371165.aspx']\n"
+     ]
+    }
+   ],
+   "source": [
+    "liste_url_recettes = []\n",
+    "for link in links:\n",
+    "    l = link.get('href')\n",
+    "    if l.startswith('/recettes/recette'):\n",
+    "        url_recette = 'https://www.marmiton.org'+l\n",
+    "        liste_url_recettes.append(url_recette)\n",
+    "print(liste_url_recettes)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "e0c45259-f5b0-476c-99c4-d9cff0da3223",
+   "metadata": {},
+   "source": [
+    "## 4.4. Visualisation\n",
+    "Cette liste d'url nous permet de retrouver les différentes recettes en suivant le lien et également de trouver leurs noms, qui sont à chaque fois contenus dans l'url."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "753181dc-ddbf-404c-9fd2-e7b9e7645689",
+   "metadata": {},
+   "source": [
+    "### 4.4.1 Pour chaque recette, on peut suivre l'url"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 68,
+   "id": "1d99de39-c5c4-4566-bebc-72c54c9199c2",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "<Response [200]>\n",
+      "<Response [200]>\n",
+      "<Response [200]>\n",
+      "<Response [200]>\n",
+      "<Response [200]>\n",
+      "<Response [200]>\n",
+      "<Response [200]>\n",
+      "<Response [200]>\n",
+      "<Response [200]>\n",
+      "<Response [200]>\n",
+      "<Response [200]>\n",
+      "<Response [200]>\n",
+      "<Response [200]>\n"
+     ]
+    }
+   ],
+   "source": [
+    "import requests\n",
+    "\n",
+    "for recette in liste_url_recettes:\n",
+    "    print(requests.get(recette))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "cdd37733-1fcd-488a-b77f-b1ca84872b17",
+   "metadata": {},
+   "source": [
+    "### 4.4.2. On peut afficher les titres des différentes recettes\n",
+    "En effet les url des recettes sont constuits selon un format semblable, ce qui fait que le nom de la recette est toujours un segment de l'url situé à la même position. Il suffit donc de ne choisir que certains caractères de l'url."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 74,
+   "id": "e9b0cad2-6dbf-414f-a65b-3727db7e3828",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "-incontour\n",
+      "gateau-moelleux-a-la-farine-de-chataigne\n",
+      "tortillas-recette-sans-farine-de-mais\n",
+      "gateau-au-chocolat-sans-farine-et-sans-beurre\n",
+      "cake-a-la-farine-de-chataigne\n",
+      "moelleux-au-chocolat-sans-gluten-farine-de-riz\n",
+      "besan-paratha-beignets-a-la-farine-de-pois-chiches-inde\n",
+      "gateau-de-farine-de-chataigne-noisettes-et-chocolat\n",
+      "cake-farine-complete-jambon-gruyere\n",
+      "gateau-aux-pommes-a-la-farine-de-chataigne\n",
+      "gateau-au-chocolat-fondant-sans-farine\n",
+      "gateau-au-yaourt-aux-3-farines\n",
+      "gateau-a-l-orange-et-poudre-d-amande-sans-farine_\n"
+     ]
+    }
+   ],
+   "source": [
+    "for recette in liste_url_recettes:\n",
+    "    print(recette[42:-11])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "19038862-7721-45bb-8917-9de4a5ac2d6a",
+   "metadata": {},
+   "source": [
+    "## 4.5. On crée une liste de recettes\n",
+    "Chaque recette est un dictionnaire comportant le nom de la recette, la liste des ingrédients et l'url associé.\\\n",
+    "a) On commence par créer une liste vide\\\n",
+    "b) Pour chaque recette (à partir de l'url trouvé plus haut), on définit le nom de la recette\\\n",
+    "c) Pour chaque recette, grâce à une recherche dans le code source, on trouve la liste des ingrédients\\\n",
+    "d) Pour chaque recette, on crée un dictionnaire avec le nom de la recette, la liste des ingrédients et l'url renvoyant à la page marmiton correspondante\\\n",
+    "e) Enfin, on enlève la première \"recette\", qui correspond, non pas à une véritable recette mais à une page de \"recettes incontournables\" qui ne nous intéressent pas ici"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 77,
+   "id": "cea30197-5cb8-4225-b639-9f73175c74f8",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "[{'Recette': 'gateau-moelleux-a-la-farine-de-chataigne', 'Liste des ingrédients': ['1 pincée\\nde sel', \"1 bonne cuillère à café\\nd' extrait de vanille liquide\", '1 sachet\\nde levure chimique', \"10 cl\\nd' huile\", '180 g\\nde sucre blanc ou sucre de canne', '160 g\\nde farine de châtaigne', '10 cl\\nde lait', '4\\noeufs', \"5 cl\\nd' eau de vie ou de rhum\"], 'Lien vers la recette': 'https://www.marmiton.org/recettes/recette_gateau-moelleux-a-la-farine-de-chataigne_85864.aspx'}, {'Recette': 'tortillas-recette-sans-farine-de-mais', 'Liste des ingrédients': ['1 cuillère à café rase\\nde sel', \"5 cl\\nd' huile de tournesol\", '250 g\\nde farine de blé (+ 1 ou 2 cuillère pour le plan de travail)', \"13 cl\\nd' eau tiède salée\"], 'Lien vers la recette': 'https://www.marmiton.org/recettes/recette_tortillas-recette-sans-farine-de-mais_40389.aspx'}, {'Recette': 'gateau-au-chocolat-sans-farine-et-sans-beurre', 'Liste des ingrédients': ['100 g\\nde sucre', '2 tablettes\\nde chocolat à croquer', '4\\noeufs', \"100 g\\nd' amandes en poudre\"], 'Lien vers la recette': 'https://www.marmiton.org/recettes/recette_gateau-au-chocolat-sans-farine-et-sans-beurre_17669.aspx'}, {'Recette': 'cake-a-la-farine-de-chataigne', 'Liste des ingrédients': ['1 pincée\\nde sel', '0.5 paquet\\nde levure chimique', 'rhum', 'vanille', \"zeste\\nd' orange\", '150 g\\nde sucre glace', '180 g\\nde beurre', '150 g\\nde farine de châtaigne', '3\\noeufs', '100 g\\nde raisins secs', '25 g\\nde noisettes hachées', \"25 g\\nd' amandes hachées\", 'zeste\\nde citron'], 'Lien vers la recette': 'https://www.marmiton.org/recettes/recette_cake-a-la-farine-de-chataigne_13766.aspx'}, {'Recette': 'moelleux-au-chocolat-sans-gluten-farine-de-riz', 'Liste des ingrédients': ['70 g\\nde beurre', '70 g\\nde sucre', '200 g\\nde chocolat noir', '70 g\\nde farine de riz', '4\\noeufs', '180 g\\nde chocolat', '200 g\\nde crème fraîche liquide'], 'Lien vers la recette': 'https://www.marmiton.org/recettes/recette_moelleux-au-chocolat-sans-gluten-farine-de-riz_42417.aspx'}, {'Recette': 'besan-paratha-beignets-a-la-farine-de-pois-chiches-inde', 'Liste des ingrédients': ['huile de friture', 'sel', '1\\noignon moyen haché', '1.5 cuillère à café\\nde thym', '0.25 botte\\nde coriandre hachée', '2 cuillères à soupe\\nde farine de blé', '3 cuillères à soupe\\nde farine de pois chiches', '1\\noeuf', \"eau froide (l'eau gazeuse donne une certaine légèreté)\"], 'Lien vers la recette': 'https://www.marmiton.org/recettes/recette_besan-paratha-beignets-a-la-farine-de-pois-chiches-inde_15796.aspx'}, {'Recette': 'gateau-de-farine-de-chataigne-noisettes-et-chocolat', 'Liste des ingrédients': ['10 g\\nde beurre (ou huile pour graisser le moule)', '100 g\\nde noix', \"5 cuillères à soupe\\nd' huile\", '150 g\\nde sucre', '11 g\\nde levure chimique', '1 pincée\\nde sel', '50 g\\nde farine blanche', '150 g\\nde farine de châtaigne', '4\\noeufs entiers', '5 cuillères à soupe\\nde lait', '100 g\\nde noisettes', '100 g\\nde nappage chocolat'], 'Lien vers la recette': 'https://www.marmiton.org/recettes/recette_gateau-de-farine-de-chataigne-noisettes-et-chocolat_17184.aspx'}, {'Recette': 'cake-farine-complete-jambon-gruyere', 'Liste des ingrédients': ['100 g\\nde gruyère râpé', 'muscade', '0.5 cuillère à café\\nde poivre', '0.5 cuillère à café\\nde sel', '2 cuillères à soupe\\nde moutarde', \"10 cl\\nd' huile d'olive\", '1 sachet\\nde levure', '200 g\\nde farine complète', '10 cl\\nde lait', '3\\noeufs', '200 g\\nde jambon'], 'Lien vers la recette': 'https://www.marmiton.org/recettes/recette_cake-farine-complete-jambon-gruyere_37981.aspx'}, {'Recette': 'gateau-aux-pommes-a-la-farine-de-chataigne', 'Liste des ingrédients': ['1\\nrhum agricole', '75 g\\nde beurre fondu', '1 cuillère à café\\nde sucre vanillé', '1 sachet\\nde levure chimique', '200 g\\nde sucre', '150 g\\nde farine de blé', '50 g\\nde farine de châtaigne', '2\\noeufs', '2\\npommes'], 'Lien vers la recette': 'https://www.marmiton.org/recettes/recette_gateau-aux-pommes-a-la-farine-de-chataigne_54688.aspx'}, {'Recette': 'gateau-au-chocolat-fondant-sans-farine', 'Liste des ingrédients': ['125 g\\nde sucre', '60 g\\nde beurre', '200 g\\nde crème dessert au chocolat', '6\\noeufs (jaunes et blancs séparés)'], 'Lien vers la recette': 'https://www.marmiton.org/recettes/recette_gateau-au-chocolat-fondant-sans-farine_30347.aspx'}, {'Recette': 'gateau-au-yaourt-aux-3-farines', 'Liste des ingrédients': ['2 sachets\\nde sucre vanillé', '1 sachet\\nde levure chimique', \"1 pot\\nd' huile\", '2 pots\\nde sucre ou de cassonade', '1 pot\\nde farine blanche', '1 pot\\nde yaourt utilisé précedemment) de farine complète', '1\\nyaourt (brassé de préférence)', '3\\noeufs', '1 pot\\nde farine de châtaigne'], 'Lien vers la recette': 'https://www.marmiton.org/recettes/recette_gateau-au-yaourt-aux-3-farines_42407.aspx'}, {'Recette': 'gateau-a-l-orange-et-poudre-d-amande-sans-farine_', 'Liste des ingrédients': ['1 sachet\\nde levure chimique (sans gluten)', '200 g\\nde sucre', '65 g\\nde beurre', '2\\noranges', '5\\noeufs', \"150 g\\nd' amandes en poudre\"], 'Lien vers la recette': 'https://www.marmiton.org/recettes/recette_gateau-a-l-orange-et-poudre-d-amande-sans-farine_371165.aspx'}]\n"
+     ]
+    }
+   ],
+   "source": [
+    "liste_recettes = []\n",
+    "\n",
+    "for url_recette in liste_url_recettes:\n",
+    "    \n",
+    "    titre = url_recette[42:-11]\n",
+    "    \n",
+    "    browser.get(url_recette)\n",
+    "    liste_url_ingredients = browser.find_elements(By.CLASS_NAME, 'card-ingredient')\n",
+    "    liste_ingredients = []\n",
+    "    for x in liste_url_ingredients:\n",
+    "        liste_ingredients.append(x.text)\n",
+    "\n",
+    "    recette = {'Recette':titre, 'Liste des ingrédients':liste_ingredients, 'Lien vers la recette':url_recette}\n",
+    "    \n",
+    "    liste_recettes.append(recette)\n",
+    "    \n",
+    "print(liste_recettes[1:])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "0636b746-e984-4882-b927-64e93c56572e",
+   "metadata": {},
+   "source": [
+    "# **5. Fin du webscrapping : on quitte la recherche**\n",
+    "Le webscrapping est terminé, on peut donc quitter le navigateur."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "204bf30e-29cb-4726-9dea-4f350f7149f9",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "browser.quit()"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.10.13"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}

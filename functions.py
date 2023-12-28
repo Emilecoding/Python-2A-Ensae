@@ -91,19 +91,19 @@ import spacy
 
 from scipy.spatial.distance import cosine
 
-nlp2 = spacy.load('fr_core_news_sm')
-vectors2 = np.array([nlp2(aliment).vector for aliment in data_ciqual['Nom clean'] if nlp2(aliment).vector.any()])     #Vectorisation des aliments de la base Ciqual par le modèle fr_core_news_sm#
+nlp = spacy.load('fr_core_news_sm')    #Modèle de traitement prédéfini, avec distance
+vectors = np.array([nlp(aliment).vector for aliment in data_ciqual['Nom clean'] if nlp(aliment).vector.any()])     #Vectorisation des aliments de la base Ciqual par le modèle fr_core_news_sm#
 
-def trouver_correspondance_spacy2(aliment_entre, dataframe, seuil=0.8):
+def find_match(aliment_entre, dataframe, seuil=0.8):
     # Vectoriser le nouvel aliment
-    vecteur_aliment_entre = nlp2(aliment_entre).vector
+    vecteur_aliment_entre = nlp(aliment_entre).vector
     
-    # Vérifier si vectors2 est vide
-    if len(vectors2) == 0:
-        return "Aucun vecteur n'est disponible dans vectors2"
+    # Vérifier si vectors est vide
+    if len(vectors) == 0:
+        return "Aucun vecteur n'est disponible dans vectors"
     
     # Calculer la similarité cosinus avec tous les vecteurs d'aliments existants
-    similarites = np.array([1 - cosine(vecteur_aliment_entre, vecteur) for vecteur in vectors2])
+    similarites = np.array([1 - cosine(vecteur_aliment_entre, vecteur) for vecteur in vectors])
     
     # Trouver la correspondance la plus proche
     index_correspondance = similarites.argmax()
@@ -117,23 +117,40 @@ def trouver_correspondance_spacy2(aliment_entre, dataframe, seuil=0.8):
 
 
 
-import re
+def calcul_calories(recette):                                     #Renvoie la valeur en kcal de la recette, cette dernière étant sous la forme : {'recette' : 'Titre recette' , 'Liste ingrédients' : [(ingrédient1, quantité1 en g);(ingrédient2, quantité2 en g) ...] , 'url':'url}#
+    valeur = 0
+    for ing in recette['Liste des ingrédients']:
+        nom_ingredient = ing[0]
+        nom_ingredient = nom_ingredient.upper()
+        quantite = ing[1]  # La quantité doit être en g, la bdd ciqual rapporte les apports pour 100g
 
-def conversion_recette(chaine):
-    # Utilise une expression régulière pour trouver les correspondances de quantité et d'ingrédient
-    regex = re.compile(r'(\d+)\s*(cl|cuillère|pincée)\s*de\s*([\w\s]+)')
-    correspondances = regex.findall(chaine)
+        # Utilisez le nom de l'ingrédient pour trouver la correspondance dans la base de données
+        nom_ciqual = find_match(nom_ingredient, data_ciqual)
 
-    # Crée la liste de couples (ingrédient, quantité)
-    liste_ingredients_quantites = [(ingredient.strip(), f"{quantite} {unite}") for quantite, unite, ingredient in correspondances]
+        # Vérifiez si la correspondance a été trouvée
+        if nom_ciqual == "Aucune correspondance trouvée":
+            continue
+        else:
+            # Filtrer le DataFrame pour l'ingrédient spécifié
+            ligne_aliment = data_ciqual[data_ciqual['Nom clean'] == nom_ciqual]
 
+            # Vérifiez si la correspondance a été trouvée dans la base de données
+            if ligne_aliment.empty:
+                continue
 
-    return liste_ingredients_quantites
+            energie_kcal_str = ligne_aliment['Energie kcal'].iloc[0].replace(',', '.')
+            
+            try:
+                energie_kcal = float(energie_kcal_str)
+            except ValueError:
+                print(f"Erreur de conversion pour l'ingrédient {nom_ingredient}, Energie kcal : {energie_kcal_str}")
+                continue
 
-# Exemple d'utilisation
-chaine_recette = '15 cl de café, une cuillère de sucre, une pincée de sel'
-resultat = conversion_recette(chaine_recette)
-print(resultat)
+            # Calculez les calories pour l'ingrédient
+            calorie_ingredient = energie_kcal * quantite / 100
+            valeur += calorie_ingredient
+
+    return valeur
 
 
 

@@ -255,11 +255,14 @@ from pattern.text.fr import singularize
     for (ingr,qtte) in conv.items(): 
         ingr = singulier(ingr)
         match = find_match(ingr, df,vectors, 0.7) # on set le seuil à 0.7 et on trouve l'ingredient correpondant
-        calo_ligne = df[df["Nom clean"]==match]
-        if not calo_ligne.empty:
-            calo [ingr] = calo_ligne['Energie kcal'].values[0]*qtte/100 # les calories sont données pour 100g de produit 
-        else:   # si pas d'info sur l'ingredient 
-            calo[ingr] = 0
+        if match == "Aucune correspondance trouvée":
+            continue
+        else:
+            calo_ligne = df[df["Nom clean"]==match]
+            if not calo_ligne.empty:
+                calo [ingr] = calo_ligne['Energie kcal'].values[0]*qtte/100 # les calories sont données pour 100g de produit 
+            else:   # si pas d'info sur l'ingredient 
+                calo[ingr] = 0
     return calo,sum(calo.values())
 
 

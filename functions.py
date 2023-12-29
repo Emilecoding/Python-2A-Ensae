@@ -90,7 +90,9 @@ def calcul_match(ingr_recette, ingr_ciqual):
 
 import spacy
 
+
 #!python -m spacy download fr_core_news_sm     # Téléchargement du modèle de traitement du français
+
 
 from scipy.spatial.distance import cosine
 
@@ -117,6 +119,7 @@ def trouver_correspondance_spacy2(aliment_entre, dataframe, seuil=0.8):
         return dataframe['Nom clean'].iloc[index_correspondance]
     else:
         return "Aucune correspondance trouvée"
+
 
 
 ## Conversion des strings 

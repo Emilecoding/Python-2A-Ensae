@@ -7,7 +7,8 @@ from nltk.tokenize import word_tokenize
 import re # for regular expressions 
 from re import sub
 from unidecode import unidecode
-
+import spacy
+from scipy.spatial.distance import cosine
 
 ## Fonctions d'affichage 
 
@@ -73,21 +74,17 @@ def cleaning(s):
 
 ## Fonctions de distance et de matching 
 
-import spacy
-
 
 #!python -m spacy download fr_core_news_sm     # Téléchargement du modèle de traitement du français
 
+nlp = spacy.load('fr_core_news_sm')    #Modèle de traitement prédéfini, avec distance
 
-from scipy.spatial.distance import cosine
 
-nlp2 = spacy.load('fr_core_news_sm')
-
-def trouver_correspondance_spacy2(aliment_entre, dataframe, vec, seuil):
+def find_match(aliment_entre, dataframe, vec, seuil=0.8):
     # Vectoriser le nouvel aliment
-    vecteur_aliment_entre = nlp2(aliment_entre).vector
-    
-    # Vérifier si vectors2 est vide
+    vecteur_aliment_entre = nlp(aliment_entre).vector
+
+    # Vérifier si vec est vide
     if len(vec) == 0:
         return "Aucun vecteur n'est disponible dans vectors2"
     
@@ -106,6 +103,43 @@ def trouver_correspondance_spacy2(aliment_entre, dataframe, vec, seuil):
 
 
 
+
+def calcul_calories(recette,vec):                                     #Renvoie la valeur en kcal de la recette, cette dernière étant sous la forme : {'recette' : 'Titre recette' , 'Liste ingrédients' : [(ingrédient1, quantité1 en g);(ingrédient2, quantité2 en g) ...] , 'url':'url}#
+    valeur = 0
+    for ing in recette['Liste des ingrédients']:
+        nom_ingredient = ing[0]
+        nom_ingredient = nom_ingredient.upper()
+        quantite = ing[1]  # La quantité doit être en g, la bdd ciqual rapporte les apports pour 100g
+
+        # Utilisez le nom de l'ingrédient pour trouver la correspondance dans la base de données
+        nom_ciqual = find_match(nom_ingredient, data_ciqual,vec)
+
+        # Vérifiez si la correspondance a été trouvée
+        if nom_ciqual == "Aucune correspondance trouvée":
+            continue
+        else:
+            # Filtrer le DataFrame pour l'ingrédient spécifié
+            ligne_aliment = data_ciqual[data_ciqual['Nom clean'] == nom_ciqual]
+
+            # Vérifiez si la correspondance a été trouvée dans la base de données
+            if ligne_aliment.empty:
+                continue
+
+            energie_kcal_str = ligne_aliment['Energie kcal'].iloc[0].replace(',', '.')
+            
+            try:
+                energie_kcal = float(energie_kcal_str)
+            except ValueError:
+                print(f"Erreur de conversion pour l'ingrédient {nom_ingredient}, Energie kcal : {energie_kcal_str}")
+                continue
+
+            # Calculez les calories pour l'ingrédient
+            calorie_ingredient = energie_kcal * quantite / 100
+            valeur += calorie_ingredient
+
+    return valeur
+
+  
 ## Conversion des strings 
     
 from fractions import Fraction
@@ -123,6 +157,7 @@ def string_to_float(value):
             raise ValueError(f"Impossible de convertir '{value}' en float")
 
     return result
+
 
 
 

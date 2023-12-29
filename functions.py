@@ -160,6 +160,110 @@ def string_to_float(value):
 
 
 
+import re 
+from unidecode import unidecode
+from conversions_unites import liquides_en_ml, solides_en_g
+
+def conversion_recette(recette):
+    liste_ingredients = recette['Liste des ingrédients']           #Car recette est un dictionnaire de la forme {'recette' : """Titre""" , 'Liste des ingrédients' : ...}#
+    """
+    Cette fonction prend la liste des ingredients retournée par le scraper de marmiton pour une recette donnée, et renvoie les ingrédients ainsi que leur conversion 
+
+    Args : 
+        liste_ingredients (list of str) : liste d'ingredients issus de la page marmiton de la recette 
+
+    Returns : 
+        Dict : avec comme clé l'ingrédient et comme valeur (quantité,unité de mesure) ou (quantité)
+    
+    """
+    res = {} # dictionnaire resultat  
+   
+    # Pour les elements type : quantité DE ingrédient (ex : 1 pincée DE sel)
+    pattern_1 = re.compile(r'(\d+)\s*(bonne cuillère à café|cuillère à café|cuillère à soupe|ml|l|kg|g|cl|cuillère|pincée|sachet)\s*de\s*([\w\s]+)')
+   
+    # Pour les elements type : quantité D' ingrédient (ex : 10 cl D'huile) 
+    pattern_2 = re.compile(r'(\d+)\s*(bonne cuillère à café|cuillère à café|cuillère à soupe|ml|l|kg|g|cl|cuillère|pincée|sachet)\s*d\'\s*([\w\s]+)')
+    
+    # Pour les elements type : quantité ingrédient (ex : 4 oeufs)
+    pattern_3 = re.compile(r'(\d+)\s*([\w\s]+)')  
+    fail =[]
+
+    for elt in liste_ingredients : 
+
+        qtte,nom = elt.split('\n')
+        ingredient = qtte+" "+nom 
+
+        if pattern_1.match(ingredient):
+            match = pattern_1.match(ingredient)
+            quantity = match.group(1)
+            unit = match.group(2)
+            ingredient_name = match.group(3)
+            res[cleaning(ingredient_name)] = (string_to_float(quantity),unidecode(unit.upper()))
+        
+        elif pattern_2.match(ingredient):
+            match = pattern_2.match(ingredient)
+            quantity = match.group(1)
+            unit = match.group(2)
+            ingredient_name = match.group(3)
+            res[cleaning(ingredient_name)] = (string_to_float(quantity),unidecode(unit.upper()))
+        
+        elif pattern_3.match(ingredient):
+            match = pattern_3.match(ingredient)
+            quantity = match.group(1)
+            ingredient_name = match.group(2)
+            res[cleaning(ingredient_name)] = (string_to_float(quantity),"UNITE") # Pour les elements comme "1 oeuf"
+        
+        else: # si l'ingredient ne correspond à aucun des patterns précédents 
+            fail.append(elt)
+    nv_res = {}
+    for ingr,(qtte,unite) in res.items():
+        if unite == "UNITE":
+            nv_res[ingr] = qtte
+        else :
+            if unite in liquides_en_ml:
+                nv_res[ingr] = liquides_en_ml[unite]*qtte
+            elif unite in solides_en_g:
+                nv_res[ingr] = solides_en_g[unite]*qtte
+            else: #cas où l'ingrédient est déjà en g ou dans la bonne unité
+                nv_res[ingr] = qtte 
+    return (nv_res,fail)
+
+
+from pattern.text.fr import singularize
+
+    def singulier(mot):
+        return singularize(mot)
+
+
+
+    def calcul_calories(recette,df):
+    """
+
+    Args : recette, dataframe data_ciqual
+
+    Returns : 
+    
+    
+    """
+    calo = {}
+    conv,fail = conversion_recette(recette) # renvoie un dictionnaire avec ingredient : qtte 
+    nlp = spacy.load('fr_core_news_sm')
+    if len(fail) !=0:
+        # On affiche les elements de la recette qui n'ont pas pu être convertis 
+        print("Les ingrédients suivants n'ont pas pu être convertis sont :\n ")
+        print(*fail,sep=',')
+    for (ingr,qtte) in conv.items(): 
+        ingr = singulier(ingr)
+        match = find_match(ingr, df,vectors, 0.7) # on set le seuil à 0.7 et on trouve l'ingredient correpondant
+        calo_ligne = df[df["Nom clean"]==match]
+        if not calo_ligne.empty:
+            calo [ingr] = calo_ligne['Energie kcal'].values[0]*qtte/100 # les calories sont données pour 100g de produit 
+        else:   # si pas d'info sur l'ingredient 
+            calo[ingr] = 0
+    return calo,sum(calo.values())
+
+
+
 
 
 

@@ -86,7 +86,7 @@ def find_match(aliment_entre, dataframe, vec, seuil=0.8):
 
     # Vérifier si vec est vide
     if len(vec) == 0:
-        return "Aucun vecteur n'est disponible dans vectors2"
+        return "Aucun vecteur n'est disponible dans vectors"
     
     # Calculer la similarité cosinus avec tous les vecteurs d'aliments existants
     similarites = np.array([1 - cosine(vecteur_aliment_entre, vecteur) for vecteur in vec])

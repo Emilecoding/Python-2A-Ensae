@@ -6,6 +6,8 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import re # for regular expressions 
 from re import sub
+from unidecode import unidecode
+
 
 ## Fonctions d'affichage 
 
@@ -53,6 +55,7 @@ nltk.download('stopwords')
 nltk.download('punkt')
 
 def cleaning(s):
+    from unidecode import unidecode 
     stop_words_spe = ['CRU','CRUE','ALIMENT','TOUT','TYPE','PREEMBALLE','PREEMBALLEE','PREEMBALLEES','MOYEN','CUIT',
                       'CUITE','PETIT DEJEUNER','ROTI','ROTIE','FOUR','AU FOUR','KG','CL','G','L','MG','MARTINIQUE',
                       'VITAMINES','MINERAUX'
@@ -87,7 +90,9 @@ def calcul_match(ingr_recette, ingr_ciqual):
 
 import spacy
 
-!python -m spacy download fr_core_news_sm     # Téléchargement du modèle de traitement du français
+
+#!python -m spacy download fr_core_news_sm     # Téléchargement du modèle de traitement du français
+
 
 from scipy.spatial.distance import cosine
 
@@ -116,23 +121,25 @@ def trouver_correspondance_spacy2(aliment_entre, dataframe, seuil=0.8):
         return "Aucune correspondance trouvée"
 
 
-import re
 
-def conversion_recette(chaine):
-    # Utilise une expression régulière pour trouver les correspondances de quantité et d'ingrédient
-    regex = re.compile(r'(\d+)\s*(cl|cuillère|pincée)\s*de\s*([\w\s]+)')
-    correspondances = regex.findall(chaine)
+## Conversion des strings 
+    
+from fractions import Fraction
 
-    # Crée la liste de couples (ingrédient, quantité)
-    liste_ingredients_quantites = [(ingredient.strip(), f"{quantite} {unite}") for quantite, unite, ingredient in correspondances]
+def string_to_float(value):
+    try:
+        # Conversion directe
+        result = float(value)
+    except ValueError:
+        try:
+            # Conversion si fraction 
+            result = float(Fraction(value))
+        except ValueError:
+            # Si les deux essais echouent, on a une erreur 
+            raise ValueError(f"Impossible de convertir '{value}' en float")
 
+    return result
 
-    return liste_ingredients_quantites
-
-# Exemple d'utilisation
-chaine_recette = '15 cl de café, une cuillère de sucre, une pincée de sel'
-resultat = conversion_recette(chaine_recette)
-print(resultat)
 
 
 

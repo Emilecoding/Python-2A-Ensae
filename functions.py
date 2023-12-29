@@ -6,6 +6,9 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import re # for regular expressions 
 from re import sub
+from unidecode import unidecode
+import spacy
+from scipy.spatial.distance import cosine
 
 ## Fonctions d'affichage 
 
@@ -53,6 +56,7 @@ nltk.download('stopwords')
 nltk.download('punkt')
 
 def cleaning(s):
+    from unidecode import unidecode 
     stop_words_spe = ['CRU','CRUE','ALIMENT','TOUT','TYPE','PREEMBALLE','PREEMBALLEE','PREEMBALLEES','MOYEN','CUIT',
                       'CUITE','PETIT DEJEUNER','ROTI','ROTIE','FOUR','AU FOUR','KG','CL','G','L','MG','MARTINIQUE',
                       'VITAMINES','MINERAUX'
@@ -71,39 +75,21 @@ def cleaning(s):
 ## Fonctions de distance et de matching 
 
 
-from itertools import product
-
-def calcul_match(ingr_recette, ingr_ciqual):
-
-    """ 
-    returns the ingrédients in the Ciqual database that best match the ingredients 
-    of the recipe we try to reproduce 
-    
-    """
-    # Produit cartésien entre la recette et les produits Ciqual
-    #produits_combines = list(product(ingr_recette, produits_ciqual))
-
-
-
-import spacy
-
-!python -m spacy download fr_core_news_sm     # Téléchargement du modèle de traitement du français
-
-from scipy.spatial.distance import cosine
+#!python -m spacy download fr_core_news_sm     # Téléchargement du modèle de traitement du français
 
 nlp = spacy.load('fr_core_news_sm')    #Modèle de traitement prédéfini, avec distance
-vectors = np.array([nlp(aliment).vector for aliment in data_ciqual['Nom clean'] if nlp(aliment).vector.any()])     #Vectorisation des aliments de la base Ciqual par le modèle fr_core_news_sm#
 
-def find_match(aliment_entre, dataframe, seuil=0.8):
+
+def find_match(aliment_entre, dataframe, vec, seuil=0.8):
     # Vectoriser le nouvel aliment
     vecteur_aliment_entre = nlp(aliment_entre).vector
-    
-    # Vérifier si vectors est vide
-    if len(vectors) == 0:
-        return "Aucun vecteur n'est disponible dans vectors"
+
+    # Vérifier si vec est vide
+    if len(vec) == 0:
+        return "Aucun vecteur n'est disponible dans vectors2"
     
     # Calculer la similarité cosinus avec tous les vecteurs d'aliments existants
-    similarites = np.array([1 - cosine(vecteur_aliment_entre, vecteur) for vecteur in vectors])
+    similarites = np.array([1 - cosine(vecteur_aliment_entre, vecteur) for vecteur in vec])
     
     # Trouver la correspondance la plus proche
     index_correspondance = similarites.argmax()
@@ -117,7 +103,8 @@ def find_match(aliment_entre, dataframe, seuil=0.8):
 
 
 
-def calcul_calories(recette):                                     #Renvoie la valeur en kcal de la recette, cette dernière étant sous la forme : {'recette' : 'Titre recette' , 'Liste ingrédients' : [(ingrédient1, quantité1 en g);(ingrédient2, quantité2 en g) ...] , 'url':'url}#
+
+def calcul_calories(recette,vec):                                     #Renvoie la valeur en kcal de la recette, cette dernière étant sous la forme : {'recette' : 'Titre recette' , 'Liste ingrédients' : [(ingrédient1, quantité1 en g);(ingrédient2, quantité2 en g) ...] , 'url':'url}#
     valeur = 0
     for ing in recette['Liste des ingrédients']:
         nom_ingredient = ing[0]
@@ -125,7 +112,7 @@ def calcul_calories(recette):                                     #Renvoie la va
         quantite = ing[1]  # La quantité doit être en g, la bdd ciqual rapporte les apports pour 100g
 
         # Utilisez le nom de l'ingrédient pour trouver la correspondance dans la base de données
-        nom_ciqual = find_match(nom_ingredient, data_ciqual)
+        nom_ciqual = find_match(nom_ingredient, data_ciqual,vec)
 
         # Vérifiez si la correspondance a été trouvée
         if nom_ciqual == "Aucune correspondance trouvée":
@@ -151,6 +138,26 @@ def calcul_calories(recette):                                     #Renvoie la va
             valeur += calorie_ingredient
 
     return valeur
+
+  
+## Conversion des strings 
+    
+from fractions import Fraction
+
+def string_to_float(value):
+    try:
+        # Conversion directe
+        result = float(value)
+    except ValueError:
+        try:
+            # Conversion si fraction 
+            result = float(Fraction(value))
+        except ValueError:
+            # Si les deux essais echouent, on a une erreur 
+            raise ValueError(f"Impossible de convertir '{value}' en float")
+
+    return result
+
 
 
 

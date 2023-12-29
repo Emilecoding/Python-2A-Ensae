@@ -73,21 +73,6 @@ def cleaning(s):
 
 ## Fonctions de distance et de matching 
 
-
-from itertools import product
-
-def calcul_match(ingr_recette, ingr_ciqual):
-
-    """ 
-    returns the ingrédients in the Ciqual database that best match the ingredients 
-    of the recipe we try to reproduce 
-    
-    """
-    # Produit cartésien entre la recette et les produits Ciqual
-    #produits_combines = list(product(ingr_recette, produits_ciqual))
-
-
-
 import spacy
 
 
@@ -97,18 +82,17 @@ import spacy
 from scipy.spatial.distance import cosine
 
 nlp2 = spacy.load('fr_core_news_sm')
-vectors2 = np.array([nlp2(aliment).vector for aliment in data_ciqual['Nom clean'] if nlp2(aliment).vector.any()])     #Vectorisation des aliments de la base Ciqual par le modèle fr_core_news_sm#
 
-def trouver_correspondance_spacy2(aliment_entre, dataframe, seuil=0.8):
+def trouver_correspondance_spacy2(aliment_entre, dataframe, vec, seuil):
     # Vectoriser le nouvel aliment
     vecteur_aliment_entre = nlp2(aliment_entre).vector
     
     # Vérifier si vectors2 est vide
-    if len(vectors2) == 0:
+    if len(vec) == 0:
         return "Aucun vecteur n'est disponible dans vectors2"
     
     # Calculer la similarité cosinus avec tous les vecteurs d'aliments existants
-    similarites = np.array([1 - cosine(vecteur_aliment_entre, vecteur) for vecteur in vectors2])
+    similarites = np.array([1 - cosine(vecteur_aliment_entre, vecteur) for vecteur in vec])
     
     # Trouver la correspondance la plus proche
     index_correspondance = similarites.argmax()

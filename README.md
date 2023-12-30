@@ -15,7 +15,14 @@ Pour cela, à l'aide d'une liste d'ingrédients dont ils disposent chez eux,l'id
 
 ## Organisation du répertoire 
 
+Ce répertoire contient principalement le *Notebook final* qui permet de faire tourner l'ensemble du projet. Néanmoins, nous avons également laissé les notebooks intermédiaires contenant les différentes étapes du projet : 
 
+- Le notebook *Notebook final* contient le déroulé complet du projet 
+- Le notebook *Analyse descriptive* contient l'analyse descriptive réalisée sur les différentes bases Ciqual
+- Le notebook *Marmiton* contient le code du scraping pour marmiton
+- Le fichier *conversions_unites* contient des dictionnaires permettant de convertir certaines mesures des recettes en quantité en g ou mL, interprétables par nos fonctions
+- Le fichier *functions* contient plusieurs fonctions nous permettant d'automatiser l'exécution dans le *Notebook final*
+- Le fichier *output_scraper* contient l'output du scraping de Marmiton pour un exemple d'aliment 
 
 
 ## Structure du projet 
@@ -38,7 +45,7 @@ Nous avons dans un second temps mis au point des fonctions permettant de passer 
 
 ### Étape 3 : Modélisation et résultats finaux 
 
-À partir d'une liste de quelques ingrédients dont l'utilisateur dispose chez lui, lui sont proposées quelques recettes utilisant ces ingrédients. Les recettes sont classées par apport énergétique décroissant.  
+À partir d'un ingrédient (mais ceci serait aisément répliquable si l'on rentrait une liste d'ingrédients) dont l'utilisateur dispose chez lui, lui sont proposées plusieurs recettes utilisant cet ingrédient. Pour chaque recette, on calcule l'apport énergétique qu'elle procure. Cela permet donc à l'utilisateur de choisir quelle recette il souhaite effectuer, selon ses besoins caloriques. À l'aide des ingrédients de la recette, il peut également choisir en fontion de ses préférences ou allergies etc. 
 
 
 

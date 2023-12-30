@@ -291,7 +291,7 @@ def calcul_calories(recette,df,vec):
         print("Les ingrédients suivants n'ont pas pu être convertis sont :\n ")
         print(*fail,sep=',')
     for (ingr,qtte) in conv.items(): 
-        #ingr = singulier(ingr)
+        ingr = str(singulier(ingr))
         match = find_match(ingr, df,vec, 0.7) # on set le seuil à 0.7 et on trouve l'ingredient correpondant
         if match == "Aucune correspondance trouvée":
             continue

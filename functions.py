@@ -12,7 +12,7 @@ from scipy.spatial.distance import cosine
 import re 
 from unidecode import unidecode
 from conversions_unites import liquides_en_ml, solides_en_g
-from pattern.text.fr import singularize
+import inflect
 from fractions import Fraction
 
 ##############################################################################################################################################
@@ -167,7 +167,8 @@ def singulier(mot):
     """
     Met le mot au singulier 
     """
-    return singularize(mot)
+    p = inflect.engine()
+    return p.singular_noun(mot)
 
 
 
@@ -193,42 +194,68 @@ def conversion_recette(recette):
     res = {} # dictionnaire resultat  
    
     # Pour les elements type : quantité DE ingrédient (ex : 1 pincée DE sel)
-    pattern_1 = re.compile(r'(\d+)\s*(bonne cuillère à café|cuillère à café|cuillère à soupe|ml|l|kg|g|cl|cuillère|pincée|sachet)\s*de\s*([\w\s]+)')
+    pattern_1 = re.compile(r'(\d+)\s*(louches |cuillères à soupe|bonne cuillère à café|cuillère à café|cuillère à soupe|ml|l|kg|g|cl|cuillère|pincée|sachet)\s*de\s*([\w\s]+)')
    
     # Pour les elements type : quantité D' ingrédient (ex : 10 cl D'huile) 
-    pattern_2 = re.compile(r'(\d+)\s*(bonne cuillère à café|cuillère à café|cuillère à soupe|ml|l|kg|g|cl|cuillère|pincée|sachet)\s*d\'\s*([\w\s]+)')
+    pattern_2 = re.compile(r'(\d+)\s*(louches|cuillères à soupe|bonne cuillère à café|cuillère à café|cuillère à soupe|ml|l|kg|g|cl|cuillère|pincée|sachet)\s*d\'\s*([\w\s]+)')
     
     # Pour les elements type : quantité ingrédient (ex : 4 oeufs)
     pattern_3 = re.compile(r'(\d+)\s*([\w\s]+)')  
+
+    # Pour les elements type : quantite en fraction DE ingredient (ex : 0.5 l DE lait)
+    pattern_4 = re.compile(r'^([\d.]+)\s*(ml|l|kg|g|cl|cuillère|pincée|sachet)\s*de\s*([\w\s]+)')
+
+    # Pour les elements type : quantite en fraction D' ingredient (ex : 0.5 l D' eau)
+    pattern_5 = re.compile(r'^([\d.]+)\s*(ml|l|kg|g|cl|cuillère|pincée|sachet)\s*d\'\s*([\w\s]+)')
+    
     fail =[]
 
     for elt in liste_ingredients : 
 
-        qtte,nom = elt.split('\n')
-        ingredient = qtte+" "+nom 
+        if '\n' in elt:
+            qtte,nom = elt.split('\n')
+            ingredient = qtte+" "+nom 
 
-        if pattern_1.match(ingredient):
-            match = pattern_1.match(ingredient)
-            quantity = match.group(1)
-            unit = match.group(2)
-            ingredient_name = match.group(3)
-            res[cleaning(ingredient_name)] = (string_to_float(quantity),unidecode(unit.upper()))
+            # On essaie de trouver une correspondance avec chaque pattern précédemment défini 
+            if pattern_1.match(ingredient):
+                match = pattern_1.match(ingredient)
+                quantity = match.group(1)
+                unit = match.group(2)
+                ingredient_name = match.group(3)
+                res[cleaning(ingredient_name)] = (string_to_float(quantity),unidecode(unit.upper()))
         
-        elif pattern_2.match(ingredient):
-            match = pattern_2.match(ingredient)
-            quantity = match.group(1)
-            unit = match.group(2)
-            ingredient_name = match.group(3)
-            res[cleaning(ingredient_name)] = (string_to_float(quantity),unidecode(unit.upper()))
+            elif pattern_2.match(ingredient):
+                match = pattern_2.match(ingredient)
+                quantity = match.group(1)
+                unit = match.group(2)
+                ingredient_name = match.group(3)
+                res[cleaning(ingredient_name)] = (string_to_float(quantity),unidecode(unit.upper()))
         
-        elif pattern_3.match(ingredient):
-            match = pattern_3.match(ingredient)
-            quantity = match.group(1)
-            ingredient_name = match.group(2)
-            res[cleaning(ingredient_name)] = (string_to_float(quantity),"UNITE") # Pour les elements comme "1 oeuf"
+            elif pattern_3.match(ingredient):
+                match = pattern_3.match(ingredient)
+                quantity = match.group(1)
+                ingredient_name = match.group(2)
+                res[cleaning(ingredient_name)] = (string_to_float(quantity),"UNITE") # Pour les elements comme "1 oeuf"
+
+            elif pattern_4.match(ingredient):
+                match = pattern_4.match(ingredient)
+                quantity = match.group(1)
+                unit = match.group(2)
+                ingredient_name = match.group(3)
+                res[cleaning(ingredient_name)] = (string_to_float(quantity),unidecode(unit.upper()))
+
+            elif pattern_5.match(ingredient):
+                match = pattern_5.match(ingredient)
+                quantity = match.group(1)
+                unit = match.group(2)
+                ingredient_name = match.group(3)
+                res[cleaning(ingredient_name)] = (string_to_float(quantity),unidecode(unit.upper()))
         
-        else: # si l'ingredient ne correspond à aucun des patterns précédents 
-            fail.append(elt)
+            else: # si l'ingredient ne correspond à aucun des patterns précédents 
+                fail.append(elt)
+
+        else:   # pour les ingredients de type "sel", et on considère que si la quantité n'est pas renseignée c'est qu'il en faut très peu 
+            res[cleaning(elt)] = (1,unidecode(elt.upper()))
     nv_res = {}
     for ingr,(qtte,unite) in res.items():
         if unite == "UNITE":
@@ -241,6 +268,7 @@ def conversion_recette(recette):
             else: #cas où l'ingrédient est déjà en g ou dans la bonne unité
                 nv_res[ingr] = qtte 
     return (nv_res,fail)
+
 
 
 def calcul_calories(recette,df,vec):
@@ -263,7 +291,7 @@ def calcul_calories(recette,df,vec):
         print("Les ingrédients suivants n'ont pas pu être convertis sont :\n ")
         print(*fail,sep=',')
     for (ingr,qtte) in conv.items(): 
-        ingr = singulier(ingr)
+        #ingr = singulier(ingr)
         match = find_match(ingr, df,vec, 0.7) # on set le seuil à 0.7 et on trouve l'ingredient correpondant
         if match == "Aucune correspondance trouvée":
             continue

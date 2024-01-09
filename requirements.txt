@@ -1,0 +1,9 @@
+nltk
+spacy
+inflect
+xlrd
+unidecode
+rapidfuzz
+wordcloud
+webdriver-manager
+lxml
